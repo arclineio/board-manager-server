@@ -1,0 +1,35 @@
+{
+  "name": "board-manager-server",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon",
+    "build": "tsx src/main.ts",
+    "prisma:generate": "pnpx prisma generate",
+    "postinstall": "pnpm prisma:generate"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "6.5.0",
+    "axios": "^1.8.3",
+    "dotenv": "^16.4.7",
+    "prisma": "^6.5.0",
+    "telegraf": "^4.16.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "nodemon": "^3.1.9",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "prisma"
+    ]
+  }
+}

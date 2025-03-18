@@ -54,6 +54,8 @@ export const createV2EmbyUser = async (data: { user_id: number; emby_id: string;
     const user = await prisma.v2_emby.create({ data });
     return { code: 200, data: user, message: "success" };
   } catch (error) {
+    console.log("createV2EmbyUser", error);
+
     // 在此处，需要删除 emby 用户信息
     try {
       await deleteEmbyUser(data.emby_id);

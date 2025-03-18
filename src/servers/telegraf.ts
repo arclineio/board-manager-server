@@ -1,6 +1,6 @@
 import { Telegraf, session, type Context } from "telegraf";
 import { message } from "telegraf/filters";
-import dotenv from "dotenv";
+import ENV from "./dotenv.js";
 
 interface SceneContext extends Context {
   session: {
@@ -8,8 +8,7 @@ interface SceneContext extends Context {
   };
 }
 
-dotenv.config();
-const bot = new Telegraf<SceneContext>(process.env.TG_BOT_TOKEN);
+const bot = new Telegraf<SceneContext>(ENV.TG_BOT_TOKEN);
 bot.use(session());
 
 const commandList = [

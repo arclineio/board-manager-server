@@ -1,18 +1,11 @@
 import axios from "axios";
-import dotenv from "dotenv";
+import ENV from "./servers/dotenv.js";
 
 import { fetchEmbyUserByTelegramId, deleteEmbyUserByTelegramId } from "./prisma.js";
 
-dotenv.config();
-
-const EMBY_URL = process.env.EMBY_URL;
-const EMBY_API_KEY = process.env.EMBY_API_KEY;
-const EMBY_TEMPLATE_USER_ID = process.env.EMBY_TEMPLATE_USER_ID;
-const EMBY_USER_PREFIX = process.env.EMBY_USER_PREFIX;
-
 const fetchHeaders = {
   headers: {
-    "X-Emby-Token": EMBY_API_KEY,
+    "X-Emby-Token": ENV.EMBY_API_KEY,
     "Content-Type": "application/json",
   },
 };
@@ -43,17 +36,17 @@ const generateRandomPassword = (length = 8): string => {
 };
 
 export const updateEmbyUserPassword = async (userId: string, password: string, isReset = false) => {
-  const requestUrl = `${EMBY_URL}/emby/Users/${userId}/Password`;
+  const requestUrl = `${ENV.EMBY_URL}/emby/Users/${userId}/Password`;
   const data = { Id: userId, NewPw: password, ResetPassword: isReset };
   await axios.post(requestUrl, data, fetchHeaders);
 };
 
 export const createEmbyUser = async (email: string) => {
   try {
-    const requestUrl = `${EMBY_URL}/emby/Users/New`;
-    const username = EMBY_USER_PREFIX ? `${EMBY_USER_PREFIX}#${email}` : email;
+    const requestUrl = `${ENV.EMBY_URL}/emby/Users/New`;
+    const username = ENV.EMBY_USER_PREFIX ? `${ENV.EMBY_USER_PREFIX}#${email}` : email;
     const password = generateRandomPassword(12);
-    const data = { Name: username, CopyFromUserId: EMBY_TEMPLATE_USER_ID, UserCopyOptions: "UserPolicy,UserConfiguration" };
+    const data = { Name: username, CopyFromUserId: ENV.EMBY_TEMPLATE_USER_ID, UserCopyOptions: "UserPolicy,UserConfiguration" };
     const res = await axios.post(requestUrl, data, fetchHeaders);
     const embyId = res.data.Id;
     await updateEmbyUserPassword(embyId, password);
@@ -66,7 +59,7 @@ export const createEmbyUser = async (email: string) => {
 
 export const deleteEmbyUser = async (userId: string) => {
   try {
-    const requestUrl = `${EMBY_URL}/emby/Users/${userId}`;
+    const requestUrl = `${ENV.EMBY_URL}/emby/Users/${userId}`;
     const { data: res } = await axios.delete(requestUrl, fetchHeaders);
     return { code: 200, data: res, message: "success" };
   } catch (error) {

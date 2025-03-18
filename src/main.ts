@@ -3,7 +3,7 @@ import bot, { MessageUpdate, commandList } from "./servers/telegraf.js";
 
 import { fetchUserByTelegramId, updateUserById, fetchUserByToken, fetchEmbyUserByTelegramId, createV2EmbyUser } from "./prisma.js";
 import scheduleJob from "./servers/schedule.js";
-import { extractToken, generateInviteLink } from "./utils/index.js";
+import { extractToken, generateInviteLink, generateEmbyServerLine } from "./utils/index.js";
 import { createEmbyUser, deleteEmbyServer } from "./emby.js";
 
 dotenv.config();
@@ -121,13 +121,7 @@ bot.command("create_emby_account", async (ctx) => {
     const { embyId, username, password } = embyRes.data;
     const params = { user_id: res.id, telegram_id: ctx.from.id, emby_id: embyId, username, password };
     const res3 = await createV2EmbyUser(params);
-    bot.telegram.sendMessage(
-      ctx.chat.id,
-      `您的 Emby 账号信息如下：\n\n用户名： <code>${res3.data.username}</code>\n密码： <code>${res3.data.password}</code>`,
-      {
-        parse_mode: "HTML",
-      }
-    );
+    bot.telegram.sendMessage(ctx.chat.id, generateEmbyServerLine(res3.data.username, res3.data.password), { parse_mode: "HTML" });
   } catch (error) {
     sendMessage(ctx.chat.id, (error as Error).message);
   }
@@ -144,9 +138,7 @@ bot.command("find_emby_account", async (ctx) => {
     await checkEmbyAccountStatus(ctx.from.id);
     const res = await fetchEmbyUserByTelegramId(ctx.from.id);
     if (!res.data) throw new Error("您未绑定 Emby 账号，请先使用 /create_emby_account 命令创建 Emby 账号。");
-    bot.telegram.sendMessage(ctx.chat.id, `您的 Emby 账号信息如下：\n\n用户名： <code>${res.data.username}</code>\n密码： <code>${res.data.password}</code>`, {
-      parse_mode: "HTML",
-    });
+    bot.telegram.sendMessage(ctx.chat.id, generateEmbyServerLine(res.data.username, res.data.password), { parse_mode: "HTML" });
   } catch (error) {
     sendMessage(ctx.chat.id, (error as Error).message);
   }

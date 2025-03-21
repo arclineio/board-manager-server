@@ -8,7 +8,7 @@ CREATE TABLE `v2_emby` (
   `emby_id` varchar(64) NOT NULL COMMENT 'Emby ID',
   `username` varchar(64) NOT NULL COMMENT 'Emby 用户名',
   `password` varchar(64) NOT NULL COMMENT 'Emby 密码',
-  `created_at` datetime NOT NULL COMMENT '创建时间',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` datetime NOT NULL COMMENT '更新时间',
   PRIMARY KEY (`id`),
   INDEX `telegram_id` (`telegram_id`)

@@ -1,8 +1,10 @@
 import dotenv from "dotenv";
 import bot, { MessageUpdate, commandList } from "./servers/telegraf.js";
 
-import { fetchUserByTelegramId, updateUserById, fetchUserByToken, fetchEmbyUserByTelegramId, createV2EmbyUser, updateEmbyUserById } from "./prisma.js";
-import { createV2CheckinUser, fetchV2CheckinUserByTelegramId, updateV2CheckinUser } from "./prisma/checkin.js";
+import { createV2CheckinUser, fetchV2CheckinByTelegramId, updateV2CheckinUser } from "./prisma/checkin.js";
+import { createV2EmbyUser, fetchV2EmbyByTelegramId } from "./prisma/emby.js";
+import { fetchUserByTelegramId, updateUserById, fetchUserByToken } from "./prisma/user.js";
+
 import scheduleJob from "./servers/schedule.js";
 import { extractToken, generateInviteLink, generateEmbyServerLine } from "./utils/index.js";
 import { createEmbyUser, deleteEmbyServer } from "./emby.js";
@@ -115,7 +117,7 @@ bot.command("create_emby_account", async (ctx) => {
     sendMessage(ctx.chat.id, "📡 正在查询您的账号状态...");
     const res = await checkEmbyAccountStatus(ctx.from.id);
 
-    const embyUserRes = await fetchEmbyUserByTelegramId(ctx.from.id);
+    const embyUserRes = await fetchV2EmbyByTelegramId(ctx.from.id);
     if (embyUserRes.data) return sendMessage(ctx.chat.id, "您已绑定 Emby 账号，请先使用 /find_emby_account 命令查询 Emby 信息。");
 
     sendMessage(ctx.chat.id, "正在为您创建Emby账号...");
@@ -138,7 +140,7 @@ bot.command("find_emby_account", async (ctx) => {
   try {
     sendMessage(ctx.chat.id, "📡 正在查询您的账号状态...");
     await checkEmbyAccountStatus(ctx.from.id);
-    const res = await fetchEmbyUserByTelegramId(ctx.from.id);
+    const res = await fetchV2EmbyByTelegramId(ctx.from.id);
     if (!res.data) throw new Error("您未绑定 Emby 账号，请先使用 /create_emby_account 命令创建 Emby 账号。");
     bot.telegram.sendMessage(ctx.chat.id, generateEmbyServerLine(res.data.username, res.data.password), { parse_mode: "HTML" });
   } catch (error) {
@@ -185,7 +187,7 @@ bot.command("sign", async (ctx) => {
   }
 
   try {
-    const res = await fetchV2CheckinUserByTelegramId(ctx.from.id);
+    const res = await fetchV2CheckinByTelegramId(ctx.from.id);
     if (!res.data) return;
     const lastSignDate = res.data.lastsign_at ? new Date(res.data.lastsign_at) : null;
     const today = new Date();
@@ -201,7 +203,7 @@ bot.command("sign", async (ctx) => {
     // 生成随机积分（10-30）
     const pointsEarned = Math.floor(Math.random() * 21) + 10;
     const newPoints = (res.data.points || 0) + pointsEarned;
-    await updateEmbyUserById(res.data.id, { points: newPoints, lastsign_at: today });
+    await updateV2CheckinUser(res.data.id, { points: newPoints, lastsign_at: today });
     bot.telegram.sendMessage(ctx.chat.id, `签到成功！获得 ${pointsEarned} 积分，当前总积分：${newPoints}`, {
       reply_parameters: { message_id: ctx.message.message_id },
     });

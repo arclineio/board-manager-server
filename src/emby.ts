@@ -1,7 +1,7 @@
 import axios from "axios";
 import ENV from "./servers/dotenv.js";
 
-import { fetchEmbyUserByTelegramId, deleteEmbyUserByTelegramId } from "./prisma.js";
+import { fetchV2EmbyByTelegramId, deleteV2EmbyByTelegramId } from "./prisma/emby.js";
 
 const fetchHeaders = {
   headers: {
@@ -69,13 +69,13 @@ export const deleteEmbyUser = async (userId: string) => {
 
 export const deleteEmbyServer = async (telegram_id: number, tips = false) => {
   try {
-    const res = await fetchEmbyUserByTelegramId(telegram_id);
+    const res = await fetchV2EmbyByTelegramId(telegram_id);
     // 检查是否需要提示且用户未绑定 Emby 账号
     if (tips && !res.data) throw new Error("您未绑定 Emby 账号，无需删除。");
     // 如果用户未绑定 Emby 账号，直接返回
     if (!res.data) return;
 
-    await deleteEmbyUserByTelegramId(telegram_id);
+    await deleteV2EmbyByTelegramId(telegram_id);
     await deleteEmbyUser(res.data.emby_id);
   } catch (error) {
     if (error instanceof Error) throw error;

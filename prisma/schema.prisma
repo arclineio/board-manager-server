@@ -8,46 +8,17 @@ datasource db {
 }
 
 model v2_user {
-  id                 Int       @id @default(autoincrement())
-  invite_user_id     Int?
-  telegram_id        BigInt?
-  email              String    @unique(map: "email") @db.VarChar(64)
-  password           String    @db.VarChar(64)
-  password_algo      String?   @db.Char(10)
-  password_salt      String?   @db.Char(10)
-  balance            Int       @default(0)
-  discount           Int?
-  commission_type    Int       @default(0) @db.TinyInt
-  commission_rate    Int?
-  commission_balance Int       @default(0)
-  t                  Int       @default(0)
-  u                  BigInt    @default(0)
-  d                  BigInt    @default(0)
-  transfer_enable    BigInt    @default(0)
-  banned             Boolean   @default(false)
-  is_admin           Boolean   @default(false)
-  last_login_at      Int?
-  is_staff           Boolean   @default(false)
-  last_login_ip      Int?
-  uuid               String    @db.VarChar(36)
-  group_id           Int?
-  plan_id            Int?
-  speed_limit        Int?
-  remind_expire      Int?      @default(1) @db.TinyInt
-  remind_traffic     Int?      @default(1) @db.TinyInt
-  token              String    @db.Char(32)
-  expired_at         BigInt?   @default(0)
-  device_limit       Int?
-  online_count       Int?
-  last_online_at     DateTime? @db.Timestamp(0)
-  remarks            String?   @db.Text
-  created_at         Int
-  updated_at         Int
-
-  @@index([created_at], map: "v2_user_created_at_index")
-  @@index([online_count], map: "v2_user_online_count_index")
-  @@index([t], map: "v2_user_t_index")
-  @@index([u, d, expired_at, group_id, banned, transfer_enable], map: "v2_user_u_d_expired_at_group_id_banned_transfer_enable_index")
+  id          Int     @id @default(autoincrement())
+  telegram_id BigInt?
+  email       String  @unique(map: "email") @db.VarChar(64)
+  password    String  @db.VarChar(64)
+  uuid        String  @db.VarChar(36)
+  group_id    Int?
+  plan_id     Int?
+  token       String  @db.Char(32)
+  expired_at  BigInt? @default(0)
+  created_at  Int
+  updated_at  Int
 }
 
 model v2_emby {

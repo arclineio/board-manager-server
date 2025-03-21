@@ -22,7 +22,9 @@ const commandList = [
   { command: "private_group", description: "进入专属群组" },
 ];
 
-bot.telegram.setMyCommands(commandList);
+bot.telegram.setMyCommands(commandList, { scope: { type: "all_private_chats" } });
+
+bot.telegram.setMyCommands([{ command: "sign", description: "签到" }], { scope: { type: "all_group_chats" } });
 
 export { message as MessageUpdate, commandList };
 export default bot;

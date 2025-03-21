@@ -41,8 +41,6 @@ const generateEmbyServerLine = (username: string, password: string) => {
     .map((url) => url.trim())
     .join("\n");
 
-  console.log(ENV.EMBY_SERVER_LINE);
-
   return `
 您的 Emby 账号信息如下：
 

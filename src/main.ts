@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import bot, { MessageUpdate, commandList } from "./servers/telegraf.js";
 
-import { fetchUserByTelegramId, updateUserById, fetchUserByToken, fetchEmbyUserByTelegramId, createV2EmbyUser } from "./prisma.js";
+import { fetchUserByTelegramId, updateUserById, fetchUserByToken, fetchEmbyUserByTelegramId, createV2EmbyUser, updateEmbyUserById } from "./prisma.js";
 import scheduleJob from "./servers/schedule.js";
 import { extractToken, generateInviteLink, generateEmbyServerLine } from "./utils/index.js";
 import { createEmbyUser, deleteEmbyServer } from "./emby.js";
@@ -41,7 +41,7 @@ bot.command("start", (ctx) => {
 });
 
 bot.command("help", (ctx) => {
-  const message = `以下是本机器人可用的命令：\n\n` + commandList.map((cmd) => `/${cmd.command} - ${cmd.description}`).join("\n\n");
+  const message = `以下是本机器人可用的命令：\n\n` + commandList.map((cmd) => `/${cmd.command} - ${cmd.description}`).join("\n");
   bot.telegram.sendMessage(ctx.chat.id, message);
 });
 
@@ -169,6 +169,30 @@ bot.command("private_group", async (ctx) => {
     await checkEmbyAccountStatus(ctx.from.id);
     const res = await generateInviteLink(ctx.from.id);
     sendMessage(ctx.chat.id, `已为您开通专属进群通道，10分钟内有效，仅限您加入。\n\n您的专属群组邀请链接为：${res.data.invite_link}`);
+  } catch (error) {
+    sendMessage(ctx.chat.id, (error as Error).message);
+  }
+});
+
+bot.command("sign", async (ctx) => {
+  if (ctx.chat.type === "private") {
+    ctx.deleteMessage();
+    sendMessage(ctx.chat.id, "当前命令仅支持在群组中使用。");
+  }
+
+  try {
+    const embyUserRes = await fetchEmbyUserByTelegramId(ctx.from.id);
+    if (!embyUserRes.data) return;
+
+    const lastSignDate = embyUserRes.data.lastsign_at ? new Date(embyUserRes.data.lastsign_at) : null;
+    const today = new Date();
+    if (lastSignDate && lastSignDate.toDateString() === today.toDateString()) return sendMessage(ctx.chat.id, "今日已签到，请明天再来！");
+
+    // 生成随机积分（10-30）
+    const pointsEarned = Math.floor(Math.random() * 21) + 10;
+    const newPoints = (embyUserRes.data.points || 0) + pointsEarned;
+    await updateEmbyUserById(embyUserRes.data.id, { points: newPoints, lastsign_at: today });
+    sendMessage(ctx.chat.id, `签到成功！获得 ${pointsEarned} 积分，当前总积分：${newPoints}`);
   } catch (error) {
     sendMessage(ctx.chat.id, (error as Error).message);
   }

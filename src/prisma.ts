@@ -33,7 +33,6 @@ export const fetchExpiredUser = async () => {
     const users = await prisma.v2_user.findMany({
       where: { telegram_id: { not: null }, expired_at: { lt: Math.floor(Date.now() / 1000) } },
     });
-
     return { code: 200, data: users, message: "success" };
   } catch (error) {
     throw new Error("fetchExpiredUser - 查询群组内绑定用户失败，请稍后再试或联系管理员。");
@@ -54,9 +53,6 @@ export const createV2EmbyUser = async (data: { user_id: number; emby_id: string;
     const user = await prisma.v2_emby.create({ data });
     return { code: 200, data: user, message: "success" };
   } catch (error) {
-    console.log("createV2EmbyUser", error);
-
-    // 在此处，需要删除 emby 用户信息
     try {
       await deleteEmbyUser(data.emby_id);
       throw new Error("deleteEmbyUser - 同步 Emby 用户库信息失败，请稍后再试或联系管理员。");
@@ -73,5 +69,14 @@ export const deleteEmbyUserByTelegramId = async (telegram_id: number) => {
     return { code: 200, data: count, message: "success" };
   } catch (error) {
     throw new Error("deleteEmbyUserByTelegramId - 删除 Emby 账号失败，请稍后再试或联系管理员。");
+  }
+};
+
+export const updateEmbyUserById = async (id: number, data: { points: number; lastsign_at: Date }) => {
+  try {
+    const user = await prisma.v2_emby.update({ where: { id }, data });
+    return { code: 200, data: user, message: "success" };
+  } catch (error) {
+    throw new Error("updateEmbyUserByTelegramId - 更新 Emby 账号失败，请稍后再试或联系管理员。");
   }
 };

@@ -6,8 +6,8 @@ import { fetchExpiredUser, updateUserById } from "../prisma.js";
 import { deleteEmbyServer } from "../emby.js";
 
 export default function scheduleJob() {
-  schedule.scheduleJob("0 * * * *", async () => {
-    await bot.telegram.sendMessage(ENV.TG_GROUP_ID, "📡 正在检查群组所有用户的订阅状态...");
+  schedule.scheduleJob("0 9,21 * * *", async () => {
+    await bot.telegram.sendMessage(ENV.TG_GROUP_ID, "📡 正在检查群组内所有用户的订阅状态...");
     const res = await fetchExpiredUser();
 
     if (!res.data.length) {
@@ -21,6 +21,6 @@ export default function scheduleJob() {
       await deleteEmbyServer(Number(user.telegram_id), false);
     }
 
-    await bot.telegram.sendMessage(ENV.TG_GROUP_ID, `已处理${res.data.length}个过期用户。`);
+    await bot.telegram.sendMessage(ENV.TG_GROUP_ID, `🤡 已处理${res.data.length}个过期用户。`);
   });
 }

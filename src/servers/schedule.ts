@@ -2,7 +2,7 @@ import schedule from "node-schedule";
 import ENV from "./dotenv.js";
 import bot from "./telegraf.js";
 
-import { fetchExpiredUser, updateUserById } from "../prisma.js";
+import { fetchExpiredUser, updateUserById } from "../prisma/user.js";
 import { deleteEmbyServer } from "../emby.js";
 
 export default function scheduleJob() {

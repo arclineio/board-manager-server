@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import bot, { MessageUpdate, commandList } from "./servers/telegraf.js";
 
 import { fetchUserByTelegramId, updateUserById, fetchUserByToken, fetchEmbyUserByTelegramId, createV2EmbyUser, updateEmbyUserById } from "./prisma.js";
+import { createV2CheckinUser, fetchV2CheckinUserByTelegramId, updateV2CheckinUser } from "./prisma/checkin.js";
 import scheduleJob from "./servers/schedule.js";
 import { extractToken, generateInviteLink, generateEmbyServerLine } from "./utils/index.js";
 import { createEmbyUser, deleteEmbyServer } from "./emby.js";
@@ -29,6 +30,7 @@ const handleBindCommand = async (url: string, chat_id: number, telegram_id: numb
       throw new Error("您的订阅已过期，请先续费套餐后再绑定。");
     }
     await updateUserById(res.data.id, telegram_id);
+    await createV2CheckinUser({ user_id: res.data.id, telegram_id });
     sendMessage(chat_id, "绑定成功，您可以使用 /private_group 命令进入专属服务群组。");
   } catch (error) {
     sendMessage(chat_id, (error as Error).message);
@@ -175,24 +177,34 @@ bot.command("private_group", async (ctx) => {
 });
 
 bot.command("sign", async (ctx) => {
+  console.log(ctx.chat.id);
+
   if (ctx.chat.type === "private") {
     ctx.deleteMessage();
     sendMessage(ctx.chat.id, "当前命令仅支持在群组中使用。");
   }
 
   try {
-    const embyUserRes = await fetchEmbyUserByTelegramId(ctx.from.id);
-    if (!embyUserRes.data) return;
-
-    const lastSignDate = embyUserRes.data.lastsign_at ? new Date(embyUserRes.data.lastsign_at) : null;
+    const res = await fetchV2CheckinUserByTelegramId(ctx.from.id);
+    if (!res.data) return;
+    const lastSignDate = res.data.lastsign_at ? new Date(res.data.lastsign_at) : null;
     const today = new Date();
-    if (lastSignDate && lastSignDate.toDateString() === today.toDateString()) return sendMessage(ctx.chat.id, "今日已签到，请明天再来！");
+    if (lastSignDate && lastSignDate.toDateString() === today.toDateString()) {
+      bot.telegram.sendMessage(ctx.chat.id, "您今天已经签到过了，请勿重复签到。", {
+        reply_parameters: {
+          message_id: ctx.message.message_id,
+        },
+      });
+      return;
+    }
 
     // 生成随机积分（10-30）
     const pointsEarned = Math.floor(Math.random() * 21) + 10;
-    const newPoints = (embyUserRes.data.points || 0) + pointsEarned;
-    await updateEmbyUserById(embyUserRes.data.id, { points: newPoints, lastsign_at: today });
-    sendMessage(ctx.chat.id, `签到成功！获得 ${pointsEarned} 积分，当前总积分：${newPoints}`);
+    const newPoints = (res.data.points || 0) + pointsEarned;
+    await updateEmbyUserById(res.data.id, { points: newPoints, lastsign_at: today });
+    bot.telegram.sendMessage(ctx.chat.id, `签到成功！获得 ${pointsEarned} 积分，当前总积分：${newPoints}`, {
+      reply_parameters: { message_id: ctx.message.message_id },
+    });
   } catch (error) {
     sendMessage(ctx.chat.id, (error as Error).message);
   }

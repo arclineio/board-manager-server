@@ -4,6 +4,7 @@ import bot from "./telegraf.js";
 
 import { fetchExpiredUser, updateUserById } from "../prisma/user.js";
 import { deleteEmbyServer } from "../emby.js";
+import { userUnbindCommand } from "../utils/index.js";
 
 export default function scheduleJob() {
   schedule.scheduleJob("0 9,21 * * *", async () => {
@@ -16,9 +17,7 @@ export default function scheduleJob() {
     }
 
     for (const user of res.data) {
-      await bot.telegram.banChatMember(ENV.TG_GROUP_ID, Number(user.telegram_id));
-      await updateUserById(user.id, null);
-      await deleteEmbyServer(Number(user.telegram_id), false);
+      await userUnbindCommand(user.id, Number(user.telegram_id));
     }
 
     await bot.telegram.sendMessage(ENV.TG_GROUP_ID, `🤡 已处理${res.data.length}个过期用户。`);

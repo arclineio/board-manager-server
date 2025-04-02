@@ -6,7 +6,7 @@ import { createV2EmbyUser, fetchV2EmbyByTelegramId } from "./prisma/emby.js";
 import { fetchUserByTelegramId, updateUserById, fetchUserByToken } from "./prisma/user.js";
 
 import scheduleJob from "./servers/schedule.js";
-import { extractToken, generateInviteLink, generateEmbyServerLine } from "./utils/index.js";
+import { extractToken, generateInviteLink, generateEmbyServerLine, userUnbindCommand } from "./utils/index.js";
 import { createEmbyUser, deleteEmbyServer } from "./emby.js";
 
 dotenv.config();
@@ -81,8 +81,7 @@ bot.command("unbind", async (ctx) => {
     sendMessage(ctx.chat.id, "📡 正在查询您的账号状态...");
     const res = await fetchUserByTelegramId(ctx.from.id);
     if (!res.data) throw new Error("您未绑定订阅地址，请先使用 /bind 命令绑定订阅地址。");
-    await updateUserById(res.data.id, null);
-    await deleteEmbyServer(ctx.from.id);
+    await userUnbindCommand(res.data.id, ctx.from.id);
     sendMessage(ctx.chat.id, "解绑成功，您可以使用 /bind 命令重新绑定订阅地址。");
   } catch (error) {
     sendMessage(ctx.chat.id, (error as Error).message);

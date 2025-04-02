@@ -1,5 +1,8 @@
 import axios from "axios";
 import ENV from "../servers/dotenv.js";
+import { updateUserById } from "../prisma/user.js";
+import { deleteEmbyServer } from "../emby.js";
+import bot from "../servers/telegraf.js";
 
 const extractToken = (url: string): string | null => {
   if (!/^https?:\/\//i.test(url)) return null;
@@ -54,4 +57,34 @@ ${serverUrlTemplate}
 `;
 };
 
-export { extractToken, generateInviteLink, generateEmbyServerLine };
+const userUnbindCommand = async (user_id: number, telegram_id: number) => {
+  try {
+    const res = await bot.telegram.getChatMember(ENV.TG_GROUP_ID, telegram_id);
+    console.log(res);
+    if (res.status === "administrator") {
+      await bot.telegram.promoteChatMember(ENV.TG_GROUP_ID, telegram_id, {
+        can_manage_chat: false,
+        can_change_info: false,
+        can_delete_messages: false,
+        can_invite_users: false,
+        can_restrict_members: false,
+        can_pin_messages: false,
+        can_manage_topics: false,
+        can_promote_members: false,
+        can_manage_video_chats: false,
+        can_post_stories: false,
+        can_edit_stories: false,
+        can_delete_stories: false,
+        is_anonymous: false,
+      });
+    }
+
+    await bot.telegram.banChatMember(ENV.TG_GROUP_ID, telegram_id, Math.floor(Date.now() / 1000) + 600);
+    await updateUserById(user_id, null);
+    await deleteEmbyServer(telegram_id, false);
+  } catch (error) {
+    console.error("Error in userUnbindCommand:", error);
+  }
+};
+
+export { extractToken, generateInviteLink, generateEmbyServerLine, userUnbindCommand };
